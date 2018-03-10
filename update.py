@@ -13,7 +13,7 @@ def mkdir_if_not_exists(x):
 
 def valid_filename(s):
     s_2 = ''
-    for c in s:
+    for c in s[:50]:
         if c in '*"/\'\\[]:;|=,<>?':
             s_2 += '_'
         else:
@@ -57,7 +57,7 @@ def click_first_search_result():
 def enter_article_list(pa_name):
     query_for_pa_homepage(pa_name)
     click_first_search_result()
-
+    
 def read_article_no(no):
     count = no
     for article_heading, article_date in zip(wd.find_elements_by_xpath(ARTICLE_HEADING_XPATH), wd.find_elements_by_xpath(ARTICLE_DATE_XPATH)):
@@ -68,10 +68,33 @@ def read_article_no(no):
         filename = valid_filename(article_date.text + ' - ' + article_heading.text)
         logging.info('Article[%d] %s', no, filename)
         if not os.path.exists(filename):
-            with open(filename, 'w') as fp:
-                article_heading.click()
+            article_heading.click()
+            with open(filename+'.html', 'w') as fp:
                 fp.write(wd.page_source)
-                wd.back()
+
+            imgs = []
+            for i in wd.find_elements_by_tag_name('img'):
+                url = i.get_attribute('data-src')
+                if url:
+                    imgs += url
+            if len(imgs):
+                pics_dir = filename + '_pics'
+                os.mkdir(pics_dir)
+                os.chdir(pics_dir)
+                no = 1
+                for img in imgs:
+                    logging.info('Picture %d: %s', no, img)
+                    try:
+                        wd.get(img)
+                    except selenium.common.exceptions.WebDriverException:
+                        logging.info('Download failed')
+                        continue
+                    wd.save_screenshot('{}_{}.png'.format(no, valid_filename(img)))
+                    no += 1
+                    wd.back()
+                os.chdir('..')
+                
+            wd.back()
         return
 
 def read_articles():
@@ -82,19 +105,22 @@ def test_read_articles():
     os.chdir('HFI2004')
     wd.get('http://mp.weixin.qq.com/profile?src=3&timestamp=1520685495&ver=1&signature=apzTz2OJCykfArpu8*CXWXtK-vn8ihw-sfnYpqhs0SXWG3F6yDN6X2hJ2IasdxjXwTFy3Ex-iZj*BIyrCs81oA==')
     read_articles()
+    os.chdir('..')
     
 def update_subscribes():
     wd.get(PA_SEARCH_HOMEPAGE)
     for entry in CONF['subscribe-list']:
         mkdir_if_not_exists(entry)
+        os.chdir(entry)
         enter_article_list(entry)
         read_articles()
         wd.back()
+        os.chdir('..')
 
 mkdir_if_not_exists(CONF['mirror-dir'])
 os.chdir(CONF['mirror-dir'])
 
-# update_subscribes()
+#update_subscribes()
 test_read_articles()
 
 wd.quit()
