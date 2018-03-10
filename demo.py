@@ -9,10 +9,11 @@ TEST_PA_NAMES=['HFI2004', 'uncle许', '!@#$!@']
 PA_SEARCH_URL='http://weixin.sogou.com/weixin?type=1&query={}'
 HEADERS={'User-Agent':' Mozilla/5.0 (Windows NT 6.1; WOW64; rv:12.0) Gecko/20100101 Firefox/12.0'}
 ARTICLES_JSON_BEGIN_PATTERN='var msgList = '
+WAIT_PERIOD=5
 
 def wget(request_url, lasttime_called=time.time()):
-    while time.time()-lasttime_called < 1:
-        time.sleep(1)
+    while time.time()-lasttime_called < WAIT_PERIOD:
+        time.sleep(WAIT_PERIOD)
     lasttime_called = time.time()
     
     req = urllib.request.Request(url=request_url, headers=HEADERS)
@@ -25,17 +26,23 @@ def wget(request_url, lasttime_called=time.time()):
 def bs(x):
     return BeautifulSoup(x, 'html.parser')
 
+def check_captcha(s):
+    if '请输入验证码' in s:
+        raise Exception('captha occured')
+
+
 def get_pa_profile(pa_name):
     pa_name_encoded = urllib.parse.quote_plus(pa_name)
     request_url = PA_SEARCH_URL.format(pa_name_encoded)
     txt = wget(request_url)
+    check_captcha(txt)
     soup = bs(txt)
     divs = soup.find_all('div')
 
     try:
         search_results = [i for i in divs if i['class'][0] == 'txt-box']
     except KeyError:
-        return 'not found'
+        raise Exception('{} not found'.format(pa_name))
 
     first_result = search_results[0]
 
@@ -49,10 +56,7 @@ def get_pa_profile(pa_name):
 
 def get_articles(pa_entry):
     homepage = wget(pa_entry)
-
-    if '请输入验证码' in homepage:
-        raise 'captha occured'
-
+    check_captcha(homepage)
     msglist_start_pos = homepage.find(ARTICLES_JSON_BEGIN_PATTERN)
     msglist_end_pos = homepage.find('\n', msglist_start_pos)
     msglist_json_txt = homepage[msglist_start_pos+len(ARTICLES_JSON_BEGIN_PATTERN):msglist_end_pos-2]
@@ -63,10 +67,6 @@ def get_articles(pa_entry):
 for test_pa_name in TEST_PA_NAMES:
     pa_profile = get_pa_profile(test_pa_name)
     print(test_pa_name, pa_profile)
-
-    if pa_profile == 'not found':
-        continue
-    
     articles = get_articles(pa_profile['entry'])
     print(json.dumps(articles, indent=2, ensure_ascii=False))
     
