@@ -1,6 +1,4 @@
 {
     "subscribe-list": ["HFI2004", "uncle许", "广州市二中宿委会", "ITRClub"],
-    "wait": 1,
-    "typing-wait": 0.2,
     "mirror-dir": "mirror"
 }
