@@ -433,4 +433,4 @@ mirror
 ```
 
 * Chrome
-* [Chrome Driver](npm.taobao.org/mirrors/chromedriver/). Remember to choose the right version that works with the version of installed Chrome.
+* [Chrome Driver](https://npm.taobao.org/mirrors/chromedriver/). Remember to choose the right version that works with the version of installed Chrome.
