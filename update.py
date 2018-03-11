@@ -156,11 +156,12 @@ def download_page_image_no(no, retry=10):
                 return SKIPPED_TAG
         logging.info('Picture %d: %s', no, url)
         filename = '{}_{}.png'.format(no, valid_filename(url))
-        with open(filename, 'wb') as fp:
-            try:
+        try:
+            with open(filename, 'wb') as fp:
                 fp.write(get_image(url))
-            except Exception as ex:
-                logging.info('Failure: %s', ex)
+        except Exception as ex:
+            logging.info('Failure: %s', ex)
+            os.remove(filename)
         return filename
     
 def download_page_images(filename):
