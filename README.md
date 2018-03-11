@@ -423,11 +423,13 @@ mirror
 # Requirements
 
 * Python3
-* Python3 Library Seleium
+* Python3 Library:
+  * Seleium
+  * BeautifulSoup (bs4)
 
 ```keyboard
 # sudo apt-get install python3
-# sudo pip install selenium
+# sudo pip install selenium bs4
 ```
 
 * Chrome
